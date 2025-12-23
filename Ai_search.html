@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manufacturing Intel Thailand | AI-Powered Company Discovery</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --primary: #2563EB;
+            --accent: #10B981;
+            --warning: #F59E0B;
+            --surface: #0F172A;
+            --surface-light: #1E293B;
+        }
+        
+        * { font-family: 'IBM Plex Sans Thai', sans-serif; }
+        code, pre { font-family: 'JetBrains Mono', monospace; }
+        
+        body {
+            background: linear-gradient(180deg, #0F172A 0%, #1E293B 100%);
+            min-height: 100vh;
+            color: #E2E8F0;
+        }
+        
+        .glass {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        
+        .gradient-border {
+            position: relative;
+            background: linear-gradient(135deg, #1E293B, #0F172A);
+            border-radius: 16px;
+        }
+        
+        .gradient-border::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 16px;
+            padding: 1px;
+            background: linear-gradient(135deg, #3B82F6, #10B981);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+        }
+        
+        .ai-response {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(37, 99, 235, 0.1));
+            border-left: 3px solid #10B981;
+        }
+        
+        .input-field {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px 20px;
+            color: white;
+            width: 100%;
+            transition: all 0.2s;
+        }
+        
+        .input-field:focus {
+            outline: none;
+            border-color: #3B82F6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #2563EB, #1D4ED8);
+            color: white;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(37, 99, 235, 0.3);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        
+        .tag-blue { background: rgba(59, 130, 246, 0.2); color: #60A5FA; }
+        .tag-green { background: rgba(16, 185, 129, 0.2); color: #34D399; }
+        .tag-orange { background: rgba(245, 158, 11, 0.2); color: #FBBF24; }
+        .tag-red { background: rgba(239, 68, 68, 0.2); color: #F87171; }
+        
+        .loading-dots {
+            display: inline-flex;
+            gap: 4px;
+        }
+        
+        .loading-dots span {
+            width: 8px;
+            height: 8px;
+            background: #3B82F6;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        
+        .loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+        
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+        
+        .company-card {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 16px;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+        
+        .company-card:hover {
+            background: rgba(30, 41, 59, 0.9);
+            border-color: rgba(59, 130, 246, 0.3);
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .score-ring {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: conic-gradient(#10B981 var(--score), rgba(255,255,255,0.1) var(--score));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .score-ring-inner {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: #1E293B;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+        }
+        
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+    
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+        
+        // System prompt for Gemini
+        const SYSTEM_PROMPT = `คุณเป็น AI Assistant ที่เชี่ยวชาญด้านการวิเคราะห์บริษัทและอุตสาหกรรมในประเทศไทย 
+โดยเฉพาะสำหรับการค้นหาบริษัทเป้าหมายที่เหมาะกับโซลูชัน "AI-Powered Workload Prediction"
+
+เป้าหมายของโซลูชันนี้:
+- พยากรณ์ปริมาณงาน (Workload) ด้วย Machine Learning
+- ช่วยให้ SMEs วางแผนการผลิตได้แม่นยำขึ้น 47%
+- ลดการทำงานล่วงเวลาและส่งมอบงานทันกำหนด
+
+กลุ่มเป้าหมายหลัก:
+1. SMEs การผลิต (Manufacturing SMEs) ในไทย
+2. บริษัทที่ใช้ระบบ Make-to-Order (MTO) หรือ Engineer-to-Order (ETO)
+3. มีพนักงาน 50-500 คน
+4. มีปัญหาการวางแผนกำลังการผลิต การประมาณเวลาส่งมอบ
+
+เมื่อผู้ใช้ถามเกี่ยวกับบริษัทเป้าหมาย ให้:
+1. วิเคราะห์ความต้องการ
+2. แนะนำกลุ่มอุตสาหกรรมที่เหมาะสม
+3. ระบุจังหวัด/พื้นที่ที่มีศักยภาพ
+4. ให้ข้อมูลเชิงลึกเกี่ยวกับโอกาสทางธุรกิจ
+5. ประเมิน Pain Points ที่เกี่ยวข้อง
+
+ตอบเป็นภาษาไทยเป็นหลัก แต่สามารถใช้คำภาษาอังกฤษทางเทคนิคได้
+ให้ข้อมูลในรูปแบบที่เป็นระเบียบ อ่านง่าย`;
+
+        // Gemini API call function
+        const callGeminiAPI = async (apiKey, userMessage) => {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [
+                        { role: "user", parts: [{ text: SYSTEM_PROMPT }] },
+                        { role: "model", parts: [{ text: "เข้าใจแล้วครับ ผมพร้อมช่วยค้นหาและวิเคราะห์บริษัทเป้าหมายสำหรับโซลูชัน AI Workload Prediction" }] },
+                        { role: "user", parts: [{ text: userMessage }] }
+                    ],
+                    generationConfig: {
+                        temperature: 0.7,
+                        maxOutputTokens: 2048,
+                    }
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`API Error: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            return data.candidates[0].content.parts[0].text;
+        };
+        
+        // Header Component
+        const Header = () => (
+            <header className="glass rounded-2xl p-6 mb-6">
+                <div className="flex items-center justify-between flex-wrap gap-4">
+                    <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-emerald-500 flex items-center justify-center shadow-lg">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                                <path d="M2 17l10 5 10-5"/>
+                                <path d="M2 12l10 5 10-5"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
+                                Manufacturing Intel Thailand
+                            </h1>
+                            <p className="text-sm text-slate-400">
+                                AI-Powered Target Company Discovery for Workload Prediction
+                            </p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <span className="tag tag-green">
+                            <i data-lucide="sparkles" style={{width: 14, height: 14}}></i>
+                            Gemini AI
+                        </span>
+                        <span className="tag tag-blue">
+                            <i data-lucide="database" style={{width: 14, height: 14}}></i>
+                            Thai SMEs
+                        </span>
+                    </div>
+                </div>
+            </header>
+        );
+        
+        // API Key Setup
+        const APIKeySetup = ({ apiKey, setApiKey, onSave }) => {
+            const [inputKey, setInputKey] = useState(apiKey);
+            
+            return (
+                <div className="gradient-border p-6 mb-6">
+                    <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                            <i data-lucide="key" style={{width: 24, height: 24, color: "#FBBF24"}}></i>
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="font-semibold text-lg mb-2">ตั้งค่า Gemini API Key</h3>
+                            <p className="text-sm text-slate-400 mb-4">
+                                ใส่ API Key เพื่อเปิดใช้งานการค้นหาด้วย AI • 
+                                <a href="https://aistudio.google.com/apikey" target="_blank" className="text-blue-400 hover:underline ml-1">
+                                    รับ API Key ฟรี →
+                                </a>
+                            </p>
+                            <div className="flex gap-3">
+                                <input
+                                    type="password"
+                                    placeholder="AIza..."
+                                    className="input-field flex-1"
+                                    value={inputKey}
+                                    onChange={(e) => setInputKey(e.target.value)}
+                                />
+                                <button 
+                                    className="btn-primary"
+                                    onClick={() => { setApiKey(inputKey); onSave(); }}
+                                    disabled={!inputKey}
+                                >
+                                    เริ่มใช้งาน
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+        
+        // Chat Message
+        const ChatMessage = ({ message, isUser }) => (
+            <div className={`flex gap-4 mb-6 ${isUser ? 'flex-row-reverse' : ''}`}>
+                <div className={`w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center ${
+                    isUser ? 'bg-blue-500/20' : 'bg-emerald-500/20'
+                }`}>
+                    <i data-lucide={isUser ? "user" : "bot"} style={{width: 20, height: 20, color: isUser ? "#60A5FA" : "#34D399"}}></i>
+                </div>
+                <div className={`flex-1 ${isUser ? 'text-right' : ''}`}>
+                    <div className={`inline-block p-4 rounded-2xl max-w-full ${
+                        isUser 
+                            ? 'bg-blue-500/20 text-left' 
+                            : 'ai-response'
+                    }`}>
+                        <div className="whitespace-pre-wrap">{message}</div>
+                    </div>
+                </div>
+            </div>
+        );
+        
+        // Loading Message
+        const LoadingMessage = () => (
+            <div className="flex gap-4 mb-6">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex-shrink-0 flex items-center justify-center">
+                    <i data-lucide="bot" style={{width: 20, height: 20, color: "#34D399"}}></i>
+                </div>
+                <div className="ai-response p-4 rounded-2xl">
+                    <div className="loading-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                    <span className="ml-3 text-slate-400">กำลังวิเคราะห์...</span>
+                </div>
+            </div>
+        );
+        
+        // Quick Query Buttons
+        const QuickQueries = ({ onSelect }) => {
+            const queries = [
+                { icon: "car", text: "หาบริษัทผลิตชิ้นส่วนยานยนต์ใน EEC", color: "blue" },
+                { icon: "cpu", text: "SMEs อิเล็กทรอนิกส์ที่มีปัญหาการวางแผน", color: "green" },
+                { icon: "utensils", text: "อุตสาหกรรมอาหารที่ใช้ Make-to-Order", color: "orange" },
+                { icon: "cog", text: "บริษัทเครื่องจักรกลขนาด 100-300 คน", color: "purple" },
+                { icon: "map-pin", text: "วิเคราะห์โอกาสในภาคเหนือ", color: "red" },
+                { icon: "trending-up", text: "อุตสาหกรรมที่เหมาะกับ AI Workload Prediction", color: "cyan" }
+            ];
+            
+            const colorMap = {
+                blue: "rgba(59, 130, 246, 0.2)",
+                green: "rgba(16, 185, 129, 0.2)",
+                orange: "rgba(245, 158, 11, 0.2)",
+                purple: "rgba(139, 92, 246, 0.2)",
+                red: "rgba(239, 68, 68, 0.2)",
+                cyan: "rgba(6, 182, 212, 0.2)"
+            };
+            
+            return (
+                <div className="glass rounded-2xl p-6 mb-6">
+                    <h3 className="font-semibold mb-4 flex items-center gap-2">
+                        <i data-lucide="zap" style={{width: 18, height: 18, color: "#FBBF24"}}></i>
+                        คำถามยอดนิยม
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {queries.map((q, i) => (
+                            <button
+                                key={i}
+                                onClick={() => onSelect(q.text)}
+                                className="p-4 rounded-xl text-left transition-all hover:scale-[1.02]"
+                                style={{ background: colorMap[q.color] }}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <i data-lucide={q.icon} style={{width: 20, height: 20}}></i>
+                                    <span className="text-sm">{q.text}</span>
+                                </div>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+        
+        // Stats Overview
+        const StatsOverview = () => {
+            const stats = [
+                { label: "Manufacturing SMEs", value: "24,190", icon: "building-2", color: "#3B82F6" },
+                { label: "Target Companies", value: "8,420", icon: "target", color: "#10B981" },
+                { label: "Provinces", value: "77", icon: "map-pin", color: "#F59E0B" },
+                { label: "Industries", value: "12", icon: "layers", color: "#8B5CF6" }
+            ];
+            
+            return (
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    {stats.map((stat, i) => (
+                        <div key={i} className="glass rounded-xl p-4">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{background: `${stat.color}20`}}>
+                                    <i data-lucide={stat.icon} style={{width: 20, height: 20, color: stat.color}}></i>
+                                </div>
+                                <div>
+                                    <p className="text-2xl font-bold">{stat.value}</p>
+                                    <p className="text-xs text-slate-400">{stat.label}</p>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            );
+        };
+        
+        // Main App
+        const App = () => {
+            const [apiKey, setApiKey] = useState(localStorage.getItem('gemini_api_key') || '');
+            const [isSetup, setIsSetup] = useState(!!apiKey);
+            const [messages, setMessages] = useState([]);
+            const [inputValue, setInputValue] = useState('');
+            const [isLoading, setIsLoading] = useState(false);
+            const [error, setError] = useState(null);
+            const messagesEndRef = useRef(null);
+            
+            useEffect(() => {
+                lucide.createIcons();
+            }, [messages, isSetup]);
+            
+            useEffect(() => {
+                messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+            }, [messages]);
+            
+            const handleSaveKey = () => {
+                localStorage.setItem('gemini_api_key', apiKey);
+                setIsSetup(true);
+                setMessages([{
+                    role: 'assistant',
+                    content: `สวัสดีครับ! ผม AI Assistant พร้อมช่วยค้นหาบริษัทเป้าหมายสำหรับโซลูชัน AI Workload Prediction
+
+ผมสามารถช่วยคุณ:
+🎯 ค้นหาบริษัท SMEs การผลิตในไทยตามเงื่อนไขที่ต้องการ
+📊 วิเคราะห์โอกาสทางธุรกิจในแต่ละภูมิภาค/อุตสาหกรรม
+💡 ระบุ Pain Points ที่เกี่ยวข้องกับการวางแผนการผลิต
+🏭 แนะนำกลุ่มเป้าหมายที่เหมาะสมที่สุด
+
+ลองถามผมได้เลยครับ! เช่น "หาบริษัทผลิตชิ้นส่วนยานยนต์ใน EEC ที่มีพนักงาน 100-300 คน"`
+                }]);
+            };
+            
+            const handleSend = async (query = null) => {
+                const message = query || inputValue.trim();
+                if (!message || isLoading) return;
+                
+                setInputValue('');
+                setError(null);
+                setMessages(prev => [...prev, { role: 'user', content: message }]);
+                setIsLoading(true);
+                
+                try {
+                    const response = await callGeminiAPI(apiKey, message);
+                    setMessages(prev => [...prev, { role: 'assistant', content: response }]);
+                } catch (err) {
+                    setError(`เกิดข้อผิดพลาด: ${err.message}`);
+                    setMessages(prev => [...prev, { 
+                        role: 'assistant', 
+                        content: `❌ เกิดข้อผิดพลาด: ${err.message}\n\nกรุณาตรวจสอบ API Key และลองใหม่อีกครั้ง` 
+                    }]);
+                }
+                
+                setIsLoading(false);
+            };
+            
+            const handleKeyPress = (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend();
+                }
+            };
+            
+            return (
+                <div className="min-h-screen p-4 lg:p-6">
+                    <div className="max-w-5xl mx-auto">
+                        <Header />
+                        
+                        {!isSetup ? (
+                            <>
+                                <APIKeySetup apiKey={apiKey} setApiKey={setApiKey} onSave={handleSaveKey} />
+                                <StatsOverview />
+                                
+                                <div className="glass rounded-2xl p-8 text-center">
+                                    <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-blue-500/20 to-emerald-500/20 flex items-center justify-center">
+                                        <i data-lucide="search" style={{width: 48, height: 48, color: "#60A5FA"}}></i>
+                                    </div>
+                                    <h2 className="text-2xl font-bold mb-3">ค้นหาบริษัทเป้าหมายด้วย AI</h2>
+                                    <p className="text-slate-400 max-w-lg mx-auto">
+                                        ใช้ภาษาธรรมชาติอธิบายบริษัทที่คุณต้องการหา 
+                                        AI จะวิเคราะห์และค้นหาบริษัท SMEs การผลิตที่เหมาะสมกับโซลูชัน AI Workload Prediction
+                                    </p>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <StatsOverview />
+                                
+                                {messages.length === 1 && <QuickQueries onSelect={(q) => handleSend(q)} />}
+                                
+                                <div className="glass rounded-2xl p-6 mb-6 min-h-[400px] max-h-[600px] overflow-y-auto">
+                                    {messages.map((msg, i) => (
+                                        <ChatMessage key={i} message={msg.content} isUser={msg.role === 'user'} />
+                                    ))}
+                                    {isLoading && <LoadingMessage />}
+                                    <div ref={messagesEndRef} />
+                                </div>
+                                
+                                <div className="glass rounded-2xl p-4">
+                                    <div className="flex gap-3">
+                                        <textarea
+                                            placeholder="ถาม AI เกี่ยวกับบริษัทเป้าหมาย เช่น 'หา SMEs ยานยนต์ในระยองที่มีปัญหาการวางแผน'"
+                                            className="input-field flex-1 resize-none"
+                                            rows="2"
+                                            value={inputValue}
+                                            onChange={(e) => setInputValue(e.target.value)}
+                                            onKeyPress={handleKeyPress}
+                                        />
+                                        <button 
+                                            className="btn-primary self-end flex items-center gap-2"
+                                            onClick={() => handleSend()}
+                                            disabled={isLoading || !inputValue.trim()}
+                                        >
+                                            <i data-lucide="send" style={{width: 18, height: 18}}></i>
+                                            ส่ง
+                                        </button>
+                                    </div>
+                                    <div className="flex items-center justify-between mt-3 text-xs text-slate-500">
+                                        <span>กด Enter เพื่อส่ง • Shift+Enter เพื่อขึ้นบรรทัดใหม่</span>
+                                        <button 
+                                            onClick={() => { setIsSetup(false); setMessages([]); }}
+                                            className="text-slate-400 hover:text-white transition-colors"
+                                        >
+                                            เปลี่ยน API Key
+                                        </button>
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                        
+                        <footer className="mt-8 py-4 text-center text-sm text-slate-500">
+                            <p>Manufacturing Intel Thailand • Powered by Gemini AI</p>
+                            <p className="mt-1">Based on research: De Simone et al. (2025) - ML Workload Prediction</p>
+                        </footer>
+                    </div>
+                </div>
+            );
+        };
+        
+        ReactDOM.createRoot(document.getElementById('app')).render(<App />);
+    </script>
+</body>
+</html>

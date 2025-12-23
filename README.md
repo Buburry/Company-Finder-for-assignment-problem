@@ -1,2 +1,71 @@
-# Company-Finder-for-assignment-problem
-To dinf the company that have potential to be target of business partner that my project can help solve their problem.
+# Manufacturing Intel Thailand v2 🏭
+
+> AI-Powered Business Intelligence Dashboard with Interactive Map
+
+ระบบค้นหาบริษัทเป้าหมายสำหรับ AI Workload Prediction - พร้อมแผนที่โต้ตอบ
+
+## ✨ Features | คุณสมบัติ
+
+### 🗺️ Interactive Thailand Map
+- คลิกที่จุดบนแผนที่เพื่อดูบริษัทในจังหวัดนั้น
+- แสดงจุดที่มีบริษัทด้วยสีน้ำเงิน (มี animation pulse)
+- Tooltip แสดงข้อมูลเมื่อ hover
+
+### 📍 Province Drill-Down
+- คลิกจังหวัด → ดูรายชื่อบริษัททั้งหมดในจังหวัดนั้น
+- Breadcrumb navigation (แผนที่ → จังหวัด)
+- เรียงตามจำนวนบริษัท
+
+### 🏢 Company Details
+- ปุ่ม "ดูรายละเอียด" → ลิงก์ไปเว็บไซต์จริงของบริษัท
+- แสดง Opportunity Score
+- แสดง Pain Points ที่เกี่ยวข้อง
+
+### 🤖 AI Search (Gemini)
+- ค้นหาบริษัทเพิ่มเติมด้วย AI
+- Quick queries - คำถามตัวอย่าง
+- ปุ่ม "เพิ่มบริษัทเข้าระบบ" - เพิ่มผลลัพธ์จาก AI เข้าฐานข้อมูล
+
+## 🚀 Quick Start
+
+### Option 1: Open Directly
+เปิดไฟล์ `index.html` ในเบราว์เซอร์
+
+### Option 2: GitHub Pages
+1. สร้าง Repository ใหม่
+2. อัพโหลด `index.html`
+3. Settings → Pages → Deploy from branch: main
+4. เข้าใช้งานที่ `https://[username].github.io/[repo-name]`
+
+## 🔑 Setup Gemini API Key
+
+1. ไปที่ [Google AI Studio](https://aistudio.google.com/apikey)
+2. สร้าง API Key (ฟรี)
+3. คลิกปุ่ม ⚙️ API Key ในแดชบอร์ด
+4. ใส่ API Key แล้วกด "บันทึก"
+
+## 📊 ข้อมูลบริษัทที่รวมมา
+
+บริษัทจริงในระบบ (15 บริษัท):
+- Delta Electronics Thailand
+- Thai Summit Autoparts
+- Thai Stanley Electric
+- Sri Trang Agro-Industry
+- Thai Oil
+- PTT Global Chemical
+- Eastern Polymer Group
+- SNC Former
+- Hana Microelectronics
+- และอื่นๆ
+
+## 🛠️ Tech Stack
+
+- React 18
+- Tailwind CSS
+- Gemini 2.0 Flash API
+- SVG Map
+- LocalStorage (API Key)
+
+## 📝 License
+
+MIT License

@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manufacturing Intel Thailand | ระบบค้นหาบริษัทเป้าหมาย</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * { font-family: 'IBM Plex Sans Thai', sans-serif; }
+        code, pre { font-family: 'JetBrains Mono', monospace; }
+        
+        body {
+            background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+            min-height: 100vh;
+            color: #E2E8F0;
+        }
+        
+        .glass {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+        }
+        
+        .province-path {
+            fill: #1E3A5F;
+            stroke: #3B82F6;
+            stroke-width: 0.5;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .province-path:hover {
+            fill: #2563EB;
+            filter: brightness(1.3);
+        }
+        
+        .province-path.active {
+            fill: #10B981;
+            stroke: #34D399;
+            stroke-width: 1.5;
+        }
+        
+        .province-path.has-companies {
+            fill: #1E4D3D;
+        }
+        
+        .province-path.has-companies:hover {
+            fill: #10B981;
+        }
+        
+        .map-tooltip {
+            position: absolute;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid #3B82F6;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 13px;
+            pointer-events: none;
+            z-index: 100;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #2563EB, #1D4ED8);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(37, 99, 235, 0.3);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 500;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .input-field {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 12px 16px;
+            color: white;
+            width: 100%;
+            transition: all 0.2s;
+        }
+        
+        .input-field:focus {
+            outline: none;
+            border-color: #3B82F6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+        
+        .company-card {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 14px;
+            padding: 20px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .company-card:hover {
+            background: rgba(30, 41, 59, 0.9);
+            border-color: rgba(59, 130, 246, 0.3);
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .tag-blue { background: rgba(59, 130, 246, 0.2); color: #60A5FA; }
+        .tag-green { background: rgba(16, 185, 129, 0.2); color: #34D399; }
+        .tag-orange { background: rgba(245, 158, 11, 0.2); color: #FBBF24; }
+        .tag-purple { background: rgba(139, 92, 246, 0.2); color: #A78BFA; }
+        .tag-red { background: rgba(239, 68, 68, 0.2); color: #F87171; }
+        
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #94A3B8;
+        }
+        
+        .breadcrumb a {
+            color: #60A5FA;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        
+        .breadcrumb a:hover {
+            color: #93C5FD;
+        }
+        
+        .stat-card {
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 14px;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(59, 130, 246, 0.5);
+        }
+        
+        .loading-spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(59, 130, 246, 0.2);
+            border-top-color: #3B82F6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .ai-message {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(37, 99, 235, 0.1));
+            border-left: 3px solid #10B981;
+            border-radius: 0 12px 12px 0;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .user-message {
+            background: rgba(59, 130, 246, 0.2);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            margin-left: 40px;
+        }
+        
+        .province-list-item {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .province-list-item:hover {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+        
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+    
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+        
+        // Thailand provinces data with real companies
+        const PROVINCES_DATA = {
+            "กรุงเทพมหานคร": { region: "central", companies: 4250, x: 48, y: 52 },
+            "สมุทรปราการ": { region: "central", companies: 1820, x: 50, y: 55 },
+            "ปทุมธานี": { region: "central", companies: 980, x: 47, y: 48 },
+            "นนทบุรี": { region: "central", companies: 720, x: 46, y: 50 },
+            "พระนครศรีอยุธยา": { region: "central", companies: 650, x: 45, y: 45 },
+            "ชลบุรี": { region: "eastern", companies: 2100, x: 55, y: 56 },
+            "ระยอง": { region: "eastern", companies: 1450, x: 58, y: 58 },
+            "ฉะเชิงเทรา": { region: "eastern", companies: 520, x: 54, y: 53 },
+            "ปราจีนบุรี": { region: "eastern", companies: 380, x: 56, y: 50 },
+            "เชียงใหม่": { region: "northern", companies: 420, x: 38, y: 22 },
+            "ลำพูน": { region: "northern", companies: 310, x: 39, y: 25 },
+            "ลำปาง": { region: "northern", companies: 180, x: 42, y: 23 },
+            "พิษณุโลก": { region: "northern", companies: 150, x: 45, y: 32 },
+            "นครราชสีมา": { region: "northeastern", companies: 480, x: 55, y: 44 },
+            "ขอนแก่น": { region: "northeastern", companies: 320, x: 55, y: 36 },
+            "อุดรธานี": { region: "northeastern", companies: 210, x: 54, y: 30 },
+            "อุบลราชธานี": { region: "northeastern", companies: 180, x: 62, y: 42 },
+            "สงขลา": { region: "southern", companies: 350, x: 45, y: 88 },
+            "สุราษฎร์ธานี": { region: "southern", companies: 220, x: 40, y: 76 },
+            "นครศรีธรรมราช": { region: "southern", companies: 180, x: 43, y: 80 },
+            "ภูเก็ต": { region: "southern", companies: 120, x: 35, y: 78 },
+            "สระบุรี": { region: "central", companies: 420, x: 48, y: 44 },
+            "นครปฐม": { region: "central", companies: 380, x: 44, y: 54 },
+            "สมุทรสาคร": { region: "central", companies: 650, x: 45, y: 56 }
+        };
+        
+        // Real Thai Manufacturing Companies Database
+        const COMPANIES_DATABASE = [
+            // กรุงเทพมหานคร
+            {
+                id: 1,
+                name: "บริษัท เดลต้า อีเลคโทรนิคส์ (ประเทศไทย) จำกัด (มหาชน)",
+                nameEn: "Delta Electronics (Thailand) PCL",
+                industry: "อิเล็กทรอนิกส์",
+                province: "กรุงเทพมหานคร",
+                employees: "5,000+",
+                type: "Large",
+                productionType: "Make-to-Order",
+                website: "https://www.deltathailand.com",
+                painPoints: ["การวางแผนการผลิต", "Supply Chain Management"],
+                opportunityScore: 78,
+                description: "ผู้ผลิตอุปกรณ์อิเล็กทรอนิกส์และโซลูชั่นพลังงาน"
+            },
+            {
+                id: 2,
+                name: "บริษัท ไทยซัมมิท โอโตพาร์ท อินดัสตรี จำกัด",
+                nameEn: "Thai Summit Autoparts Industry Co., Ltd.",
+                industry: "ยานยนต์และชิ้นส่วน",
+                province: "กรุงเทพมหานคร",
+                employees: "1,000-5,000",
+                type: "Large",
+                productionType: "Make-to-Order",
+                website: "https://www.thaisummit.co.th",
+                painPoints: ["การพยากรณ์ความต้องการ", "การจัดสรรทรัพยากร"],
+                opportunityScore: 82,
+                description: "ผู้ผลิตชิ้นส่วนยานยนต์ชั้นนำของไทย"
+            },
+            // สมุทรปราการ
+            {
+                id: 3,
+                name: "บริษัท ไทยสแตนเลย์การไฟฟ้า จำกัด (มหาชน)",
+                nameEn: "Thai Stanley Electric PCL",
+                industry: "ยานยนต์และชิ้นส่วน",
+                province: "สมุทรปราการ",
+                employees: "1,000-5,000",
+                type: "Large",
+                productionType: "Make-to-Order",
+                website: "https://www.thaistanley.com",
+                painPoints: ["การวางแผนกำลังการผลิต", "การจัดการคุณภาพ"],
+                opportunityScore: 85,
+                description: "ผู้ผลิตอุปกรณ์ส่องสว่างยานยนต์"
+            },
+            {
+                id: 4,
+                name: "บริษัท ศรีตรังแอโกรอินดัสทรี จำกัด (มหาชน)",
+                nameEn: "Sri Trang Agro-Industry PCL",
+                industry: "ยางและผลิตภัณฑ์ยาง",
+                province: "สมุทรปราการ",
+                employees: "1,000-5,000",
+                type: "Large",
+                productionType: "Make-to-Stock",
+                website: "https://www.sritranggroup.com",
+                painPoints: ["การพยากรณ์ปริมาณการผลิต", "การจัดการวัตถุดิบ"],
+                opportunityScore: 75,
+                description: "ผู้ผลิตและส่งออกยางพาราชั้นนำ"
+            },
+            // ชลบุรี
+            {
+                id: 5,
+                name: "บริษัท ไทยออยล์ จำกัด (มหาชน)",
+                nameEn: "Thai Oil PCL",
+                industry: "ปิโตรเคมี",
+                province: "ชลบุรี",
+                employees: "1,000-5,000",
+                type: "Large",
+                productionType: "Continuous Process",
+                website: "https://www.thaioilgroup.com",
+                painPoints: ["การวางแผนการผลิต", "Maintenance Planning"],
+                opportunityScore: 70,
+                description: "โรงกลั่นน้ำมันชั้นนำของไทย"
+            },
+            {
+                id: 6,
+                name: "บริษัท ไทย เอ็น เจ อาร์ จำกัด",
+                nameEn: "Thai NJR Co., Ltd.",
+                industry: "ยานยนต์และชิ้นส่วน",
+                province: "ชลบุรี",
+                employees: "200-500",
+                type: "SME",
+                productionType: "Make-to-Order",
+                website: "https://www.thaiautomotiveparts.com",
+                painPoints: ["การประมาณเวลาผลิต", "การจัดลำดับงาน"],
+                opportunityScore: 92,
+                description: "ผู้ผลิตชิ้นส่วนพลาสติกยานยนต์"
+            },
+            // ระยอง
+            {
+                id: 7,
+                name: "บริษัท พีทีที โกลบอล เคมิคอล จำกัด (มหาชน)",
+                nameEn: "PTT Global Chemical PCL",
+                industry: "ปิโตรเคมี",
+                province: "ระยอง",
+                employees: "5,000+",
+                type: "Large",
+                productionType: "Continuous Process",
+                website: "https://www.pttgcgroup.com",
+                painPoints: ["การวางแผนการผลิต", "การจัดการพลังงาน"],
+                opportunityScore: 72,
+                description: "ผู้นำด้านปิโตรเคมีครบวงจร"
+            },
+            {
+                id: 8,
+                name: "บริษัท อีสเทิร์น โพลีเมอร์ กรุ๊ป จำกัด (มหาชน)",
+                nameEn: "Eastern Polymer Group PCL",
+                industry: "พลาสติก",
+                province: "ระยอง",
+                employees: "500-1,000",
+                type: "SME",
+                productionType: "Make-to-Order",
+                website: "https://www.epg.co.th",
+                painPoints: ["การพยากรณ์ Workload", "การวางแผนทรัพยากร"],
+                opportunityScore: 88,
+                description: "ผู้ผลิตผลิตภัณฑ์พลาสติกครบวงจร"
+            },
+            // ปทุมธานี
+            {
+                id: 9,
+                name: "บริษัท แอดวานซ์ อินโฟร์ เซอร์วิส จำกัด (มหาชน)",
+                nameEn: "Advanced Info Service PCL",
+                industry: "โทรคมนาคม",
+                province: "ปทุมธานี",
+                employees: "5,000+",
+                type: "Large",
+                productionType: "Service",
+                website: "https://www.ais.th",
+                painPoints: ["การวางแผนกำลังคน", "การพยากรณ์ความต้องการ"],
+                opportunityScore: 65,
+                description: "ผู้ให้บริการเครือข่ายมือถือรายใหญ่"
+            },
+            {
+                id: 10,
+                name: "บริษัท เอส เอ็น ซี ฟอร์เมอร์ จำกัด (มหาชน)",
+                nameEn: "SNC Former PCL",
+                industry: "เครื่องจักรกล",
+                province: "ปทุมธานี",
+                employees: "200-500",
+                type: "SME",
+                productionType: "Engineer-to-Order",
+                website: "https://www.sncformer.com",
+                painPoints: ["การประมาณราคา", "การพยากรณ์เวลาผลิต"],
+                opportunityScore: 95,
+                description: "ผู้ผลิตชิ้นส่วนโลหะและแม่พิมพ์"
+            },
+            // เชียงใหม่
+            {
+                id: 11,
+                name: "บริษัท ลานนาโปรดักส์ จำกัด",
+                nameEn: "Lanna Products Co., Ltd.",
+                industry: "อาหารและเครื่องดื่ม",
+                province: "เชียงใหม่",
+                employees: "100-200",
+                type: "SME",
+                productionType: "Make-to-Stock",
+                website: "https://www.lannaproducts.com",
+                painPoints: ["การวางแผนกำลังการผลิต", "การจัดการสต็อก"],
+                opportunityScore: 80,
+                description: "ผู้ผลิตอาหารแปรรูปภาคเหนือ"
+            },
+            {
+                id: 12,
+                name: "บริษัท ฮานา ไมโครอิเล็คโทรนิคส จำกัด (มหาชน)",
+                nameEn: "Hana Microelectronics PCL",
+                industry: "อิเล็กทรอนิกส์",
+                province: "ลำพูน",
+                employees: "5,000+",
+                type: "Large",
+                productionType: "Make-to-Order",
+                website: "https://www.hanagroup.com",
+                painPoints: ["การวางแผนการผลิต", "การจัดการคุณภาพ"],
+                opportunityScore: 83,
+                description: "ผู้ผลิตชิ้นส่วนอิเล็กทรอนิกส์ชั้นนำ"
+            },
+            // นครราชสีมา
+            {
+                id: 13,
+                name: "บริษัท ซีพีเอฟ (ประเทศไทย) จำกัด (มหาชน) - โคราช",
+                nameEn: "CPF (Thailand) PCL - Korat",
+                industry: "อาหารและเครื่องดื่ม",
+                province: "นครราชสีมา",
+                employees: "1,000-5,000",
+                type: "Large",
+                productionType: "Make-to-Stock",
+                website: "https://www.cpfworldwide.com",
+                painPoints: ["การพยากรณ์ความต้องการ", "การวางแผนการผลิต"],
+                opportunityScore: 76,
+                description: "ผู้ผลิตอาหารสัตว์และผลิตภัณฑ์จากสัตว์"
+            },
+            // สงขลา
+            {
+                id: 14,
+                name: "บริษัท สยามเซมเพอร์เมด จำกัด",
+                nameEn: "Siam Sempermed Co., Ltd.",
+                industry: "ยางและผลิตภัณฑ์ยาง",
+                province: "สงขลา",
+                employees: "1,000-5,000",
+                type: "Large",
+                productionType: "Make-to-Stock",
+                website: "https://www.sempermed.com",
+                painPoints: ["การวางแผนกำลังการผลิต", "การจัดการคุณภาพ"],
+                opportunityScore: 79,
+                description: "ผู้ผลิตถุงมือยางชั้นนำ"
+            },
+            // สระบุรี
+            {
+                id: 15,
+                name: "บริษัท ปูนซิเมนต์ไทย จำกัด (มหาชน) - สระบุรี",
+                nameEn: "The Siam Cement PCL - Saraburi",
+                industry: "วัสดุก่อสร้าง",
+                province: "สระบุรี",
+                employees: "5,000+",
+                type: "Large",
+                productionType: "Make-to-Stock",
+                website: "https://www.scg.com",
+                painPoints: ["การวางแผนการผลิต", "การจัดการพลังงาน"],
+                opportunityScore: 74,
+                description: "ผู้ผลิตปูนซีเมนต์และวัสดุก่อสร้างชั้นนำ"
+            }
+        ];
+        
+        // Region colors
+        const REGION_COLORS = {
+            central: "#3B82F6",
+            eastern: "#10B981",
+            northern: "#F59E0B",
+            northeastern: "#8B5CF6",
+            southern: "#EF4444"
+        };
+        
+        const REGION_NAMES = {
+            central: "ภาคกลาง",
+            eastern: "ภาคตะวันออก",
+            northern: "ภาคเหนือ",
+            northeastern: "ภาคตะวันออกเฉียงเหนือ",
+            southern: "ภาคใต้"
+        };
+
+        // Gemini API System Prompt
+        const SYSTEM_PROMPT = `คุณเป็น AI Assistant ที่เชี่ยวชาญด้านการค้นหาและวิเคราะห์บริษัทในประเทศไทย
+สำหรับโซลูชัน "AI-Powered Workload Prediction"
+
+เมื่อผู้ใช้ถามหาบริษัท ให้ตอบในรูปแบบ JSON ดังนี้:
+{
+  "companies": [
+    {
+      "name": "ชื่อบริษัท",
+      "nameEn": "English Name",
+      "industry": "อุตสาหกรรม",
+      "province": "จังหวัด",
+      "employees": "จำนวนพนักงาน",
+      "type": "SME หรือ Large",
+      "productionType": "ประเภทการผลิต",
+      "website": "URL เว็บไซต์จริง",
+      "description": "คำอธิบายสั้นๆ",
+      "opportunityScore": 0-100
+    }
+  ],
+  "summary": "สรุปผลการค้นหา",
+  "insights": ["ข้อมูลเชิงลึก 1", "ข้อมูลเชิงลึก 2"]
+}
+
+กฎ:
+1. ให้ข้อมูลบริษัทจริงในประเทศไทยเท่านั้น
+2. Website ต้องเป็น URL ที่มีอยู่จริง
+3. opportunityScore ประเมินจากความเหมาะสมกับ AI Workload Prediction
+4. SME = พนักงาน 50-500 คน, Large = มากกว่า 500 คน
+5. ตอบเป็นภาษาไทยในส่วน summary และ insights`;
+        
+        // Header Component
+        const Header = ({ currentView, onNavigate, apiKey, setApiKey }) => {
+            const [showApiModal, setShowApiModal] = useState(false);
+            const [tempApiKey, setTempApiKey] = useState(apiKey);
+            
+            return (
+                <header className="glass p-4 mb-6">
+                    <div className="flex items-center justify-between flex-wrap gap-4">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-emerald-500 flex items-center justify-center">
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                                    <path d="M2 17l10 5 10-5"/>
+                                    <path d="M2 12l10 5 10-5"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h1 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
+                                    Manufacturing Intel Thailand
+                                </h1>
+                                <p className="text-xs text-slate-400">AI-Powered Target Company Discovery</p>
+                            </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-3">
+                            <button 
+                                onClick={() => onNavigate('map')}
+                                className={`btn-secondary text-sm ${currentView === 'map' ? 'bg-blue-500/30 border-blue-500' : ''}`}
+                            >
+                                🗺️ แผนที่
+                            </button>
+                            <button 
+                                onClick={() => onNavigate('ai-search')}
+                                className={`btn-secondary text-sm ${currentView === 'ai-search' ? 'bg-blue-500/30 border-blue-500' : ''}`}
+                            >
+                                🤖 AI Search
+                            </button>
+                            <button 
+                                onClick={() => setShowApiModal(true)}
+                                className="btn-secondary text-sm"
+                            >
+                                ⚙️ API Key
+                            </button>
+                        </div>
+                    </div>
+                    
+                    {/* API Key Modal */}
+                    {showApiModal && (
+                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                            <div className="glass p-6 max-w-md w-full">
+                                <h3 className="text-lg font-semibold mb-4">ตั้งค่า Gemini API Key</h3>
+                                <p className="text-sm text-slate-400 mb-4">
+                                    ใส่ API Key เพื่อใช้งาน AI Search • 
+                                    <a href="https://aistudio.google.com/apikey" target="_blank" className="text-blue-400 hover:underline">
+                                        รับ API Key ฟรี →
+                                    </a>
+                                </p>
+                                <input
+                                    type="password"
+                                    placeholder="AIza..."
+                                    className="input-field mb-4"
+                                    value={tempApiKey}
+                                    onChange={(e) => setTempApiKey(e.target.value)}
+                                />
+                                <div className="flex gap-3">
+                                    <button 
+                                        onClick={() => setShowApiModal(false)}
+                                        className="btn-secondary flex-1"
+                                    >
+                                        ยกเลิก
+                                    </button>
+                                    <button 
+                                        onClick={() => {
+                                            setApiKey(tempApiKey);
+                                            localStorage.setItem('gemini_api_key', tempApiKey);
+                                            setShowApiModal(false);
+                                        }}
+                                        className="btn-primary flex-1"
+                                    >
+                                        บันทึก
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </header>
+            );
+        };
+        
+        // Thailand Map Component
+        const ThailandMap = ({ onProvinceClick, selectedProvince }) => {
+            const [tooltip, setTooltip] = useState({ show: false, x: 0, y: 0, province: '', companies: 0 });
+            
+            const handleMouseMove = (e, province) => {
+                const data = PROVINCES_DATA[province];
+                if (data) {
+                    setTooltip({
+                        show: true,
+                        x: e.clientX + 10,
+                        y: e.clientY + 10,
+                        province,
+                        companies: data.companies,
+                        region: REGION_NAMES[data.region]
+                    });
+                }
+            };
+            
+            const handleMouseLeave = () => {
+                setTooltip({ ...tooltip, show: false });
+            };
+            
+            return (
+                <div className="relative">
+                    <svg viewBox="0 0 100 100" className="w-full h-auto max-h-[500px]">
+                        {/* Background */}
+                        <rect width="100" height="100" fill="#0F172A"/>
+                        
+                        {/* Thailand simplified outline */}
+                        <path 
+                            d="M35 15 L50 10 L60 15 L65 25 L62 35 L58 40 L55 35 L52 38 L55 45 L60 50 L58 55 L55 52 L52 55 L55 60 L52 65 L48 60 L45 65 L42 60 L40 55 L35 58 L38 50 L35 45 L32 48 L30 42 L35 38 L32 32 L35 25 Z"
+                            fill="#1E3A5F"
+                            stroke="#3B82F6"
+                            strokeWidth="0.5"
+                        />
+                        
+                        {/* Province dots */}
+                        {Object.entries(PROVINCES_DATA).map(([province, data]) => {
+                            const companyCount = COMPANIES_DATABASE.filter(c => c.province === province).length;
+                            const hasCompanies = companyCount > 0;
+                            
+                            return (
+                                <g key={province}>
+                                    <circle
+                                        cx={data.x}
+                                        cy={data.y}
+                                        r={hasCompanies ? 3 : 2}
+                                        fill={selectedProvince === province ? "#10B981" : (hasCompanies ? "#3B82F6" : "#64748B")}
+                                        stroke={hasCompanies ? "#60A5FA" : "#475569"}
+                                        strokeWidth="0.5"
+                                        style={{ cursor: 'pointer', transition: 'all 0.2s' }}
+                                        onClick={() => onProvinceClick(province)}
+                                        onMouseMove={(e) => handleMouseMove(e, province)}
+                                        onMouseLeave={handleMouseLeave}
+                                    />
+                                    {hasCompanies && (
+                                        <circle
+                                            cx={data.x}
+                                            cy={data.y}
+                                            r={4}
+                                            fill="none"
+                                            stroke="#3B82F6"
+                                            strokeWidth="0.3"
+                                            opacity="0.5"
+                                        >
+                                            <animate attributeName="r" from="3" to="6" dur="2s" repeatCount="indefinite"/>
+                                            <animate attributeName="opacity" from="0.5" to="0" dur="2s" repeatCount="indefinite"/>
+                                        </circle>
+                                    )}
+                                </g>
+                            );
+                        })}
+                        
+                        {/* Legend */}
+                        <g transform="translate(5, 80)">
+                            <rect width="25" height="18" fill="rgba(15,23,42,0.8)" rx="2"/>
+                            <circle cx="4" cy="5" r="2" fill="#3B82F6"/>
+                            <text x="8" y="7" fill="#94A3B8" fontSize="2.5">มีบริษัท</text>
+                            <circle cx="4" cy="12" r="2" fill="#64748B"/>
+                            <text x="8" y="14" fill="#94A3B8" fontSize="2.5">ไม่มีข้อมูล</text>
+                        </g>
+                    </svg>
+                    
+                    {/* Tooltip */}
+                    {tooltip.show && (
+                        <div 
+                            className="map-tooltip"
+                            style={{ 
+                                position: 'fixed',
+                                left: tooltip.x,
+                                top: tooltip.y
+                            }}
+                        >
+                            <div className="font-semibold">{tooltip.province}</div>
+                            <div className="text-xs text-slate-400">{tooltip.region}</div>
+                            <div className="text-sm text-blue-400 mt-1">
+                                {COMPANIES_DATABASE.filter(c => c.province === tooltip.province).length} บริษัทในระบบ
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+        
+        // Province List Component
+        const ProvinceList = ({ onProvinceClick }) => {
+            const provincesWithCompanies = Object.entries(PROVINCES_DATA)
+                .map(([name, data]) => ({
+                    name,
+                    ...data,
+                    companyCount: COMPANIES_DATABASE.filter(c => c.province === name).length
+                }))
+                .filter(p => p.companyCount > 0)
+                .sort((a, b) => b.companyCount - a.companyCount);
+            
+            return (
+                <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
+                    {provincesWithCompanies.map(province => (
+                        <div 
+                            key={province.name}
+                            className="province-list-item"
+                            onClick={() => onProvinceClick(province.name)}
+                        >
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div 
+                                        className="w-3 h-3 rounded-full"
+                                        style={{ background: REGION_COLORS[province.region] }}
+                                    />
+                                    <div>
+                                        <div className="font-medium">{province.name}</div>
+                                        <div className="text-xs text-slate-400">{REGION_NAMES[province.region]}</div>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <div className="text-lg font-bold text-blue-400">{province.companyCount}</div>
+                                    <div className="text-xs text-slate-400">บริษัท</div>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            );
+        };
+        
+        // Company Card Component
+        const CompanyCard = ({ company }) => (
+            <div className="company-card">
+                <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                        <h3 className="font-semibold text-lg mb-1">{company.name}</h3>
+                        <p className="text-sm text-slate-400 mb-3">{company.nameEn}</p>
+                        <div className="flex flex-wrap gap-2 mb-3">
+                            <span className="tag tag-blue">{company.industry}</span>
+                            <span className="tag tag-purple">{company.province}</span>
+                            <span className="tag tag-orange">{company.productionType}</span>
+                            <span className={`tag ${company.type === 'SME' ? 'tag-green' : 'tag-red'}`}>
+                                {company.type} • {company.employees}
+                            </span>
+                        </div>
+                        <p className="text-sm text-slate-300 mb-3">{company.description}</p>
+                        <div className="text-xs text-slate-400">
+                            <strong>Pain Points:</strong> {company.painPoints.join(", ")}
+                        </div>
+                    </div>
+                    <div className="text-center">
+                        <div className="w-16 h-16 rounded-full border-4 border-emerald-500/30 flex items-center justify-center mb-2"
+                             style={{ 
+                                 background: `conic-gradient(#10B981 ${company.opportunityScore}%, transparent ${company.opportunityScore}%)`
+                             }}>
+                            <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center">
+                                <span className="text-lg font-bold">{company.opportunityScore}</span>
+                            </div>
+                        </div>
+                        <div className="text-xs text-slate-400">คะแนน</div>
+                    </div>
+                </div>
+                <div className="mt-4 pt-4 border-t border-slate-700 flex justify-end">
+                    <a 
+                        href={company.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn-primary text-sm"
+                    >
+                        🔗 ดูรายละเอียด →
+                    </a>
+                </div>
+            </div>
+        );
+        
+        // Province Detail View
+        const ProvinceDetailView = ({ province, onBack, companies }) => (
+            <div>
+                <div className="breadcrumb mb-4">
+                    <a onClick={onBack}>🗺️ แผนที่</a>
+                    <span>→</span>
+                    <span className="text-white">{province}</span>
+                </div>
+                
+                <div className="glass p-6 mb-6">
+                    <div className="flex items-center gap-4">
+                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500/20 to-emerald-500/20 flex items-center justify-center">
+                            <span className="text-3xl">📍</span>
+                        </div>
+                        <div>
+                            <h2 className="text-2xl font-bold">{province}</h2>
+                            <p className="text-slate-400">
+                                {REGION_NAMES[PROVINCES_DATA[province]?.region]} • {companies.length} บริษัทในระบบ
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                {companies.length > 0 ? (
+                    <div className="space-y-4">
+                        {companies.map(company => (
+                            <CompanyCard key={company.id} company={company} />
+                        ))}
+                    </div>
+                ) : (
+                    <div className="glass p-12 text-center">
+                        <div className="text-5xl mb-4">🔍</div>
+                        <h3 className="text-xl font-semibold mb-2">ยังไม่มีบริษัทในจังหวัดนี้</h3>
+                        <p className="text-slate-400">ใช้ AI Search เพื่อค้นหาบริษัทเพิ่มเติม</p>
+                    </div>
+                )}
+            </div>
+        );
+        
+        // AI Search View
+        const AISearchView = ({ apiKey, onAddCompanies }) => {
+            const [query, setQuery] = useState('');
+            const [messages, setMessages] = useState([]);
+            const [isLoading, setIsLoading] = useState(false);
+            const [foundCompanies, setFoundCompanies] = useState([]);
+            const messagesEndRef = useRef(null);
+            
+            useEffect(() => {
+                messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+            }, [messages]);
+            
+            const searchWithAI = async () => {
+                if (!query.trim() || isLoading) return;
+                
+                if (!apiKey) {
+                    setMessages(prev => [...prev, {
+                        role: 'assistant',
+                        content: '❌ กรุณาตั้งค่า Gemini API Key ก่อนใช้งาน (คลิกปุ่ม ⚙️ API Key ด้านบน)'
+                    }]);
+                    return;
+                }
+                
+                const userQuery = query;
+                setQuery('');
+                setMessages(prev => [...prev, { role: 'user', content: userQuery }]);
+                setIsLoading(true);
+                
+                try {
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [
+                                { role: "user", parts: [{ text: SYSTEM_PROMPT }] },
+                                { role: "model", parts: [{ text: "เข้าใจแล้วครับ พร้อมค้นหาและตอบเป็น JSON" }] },
+                                { role: "user", parts: [{ text: userQuery }] }
+                            ],
+                            generationConfig: {
+                                temperature: 0.7,
+                                maxOutputTokens: 4096,
+                            }
+                        })
+                    });
+                    
+                    if (!response.ok) throw new Error(`API Error: ${response.status}`);
+                    
+                    const data = await response.json();
+                    const text = data.candidates[0].content.parts[0].text;
+                    
+                    // Try to parse JSON from response
+                    let jsonMatch = text.match(/\{[\s\S]*\}/);
+                    if (jsonMatch) {
+                        try {
+                            const parsed = JSON.parse(jsonMatch[0]);
+                            if (parsed.companies && parsed.companies.length > 0) {
+                                const newCompanies = parsed.companies.map((c, i) => ({
+                                    ...c,
+                                    id: Date.now() + i,
+                                    painPoints: c.painPoints || ["การวางแผนการผลิต"],
+                                    opportunityScore: c.opportunityScore || 80
+                                }));
+                                setFoundCompanies(newCompanies);
+                                setMessages(prev => [...prev, {
+                                    role: 'assistant',
+                                    content: `✅ ${parsed.summary || `พบ ${newCompanies.length} บริษัท`}\n\n${parsed.insights ? '💡 Insights:\n• ' + parsed.insights.join('\n• ') : ''}`,
+                                    companies: newCompanies
+                                }]);
+                            } else {
+                                setMessages(prev => [...prev, { role: 'assistant', content: text }]);
+                            }
+                        } catch (e) {
+                            setMessages(prev => [...prev, { role: 'assistant', content: text }]);
+                        }
+                    } else {
+                        setMessages(prev => [...prev, { role: 'assistant', content: text }]);
+                    }
+                } catch (err) {
+                    setMessages(prev => [...prev, {
+                        role: 'assistant',
+                        content: `❌ เกิดข้อผิดพลาด: ${err.message}\n\nกรุณาตรวจสอบ API Key และลองใหม่`
+                    }]);
+                }
+                
+                setIsLoading(false);
+            };
+            
+            const quickQueries = [
+                "หาบริษัทผลิตชิ้นส่วนยานยนต์ใน EEC",
+                "SMEs อิเล็กทรอนิกส์ในลำพูน",
+                "โรงงานอาหารในภาคเหนือ",
+                "บริษัทพลาสติกในระยอง"
+            ];
+            
+            return (
+                <div>
+                    <div className="glass p-6 mb-6">
+                        <h2 className="text-xl font-bold mb-2 flex items-center gap-2">
+                            🤖 AI Company Search
+                        </h2>
+                        <p className="text-slate-400 text-sm mb-4">
+                            ใช้ Gemini AI ค้นหาบริษัทเป้าหมายเพิ่มเติมจากอินเทอร์เน็ต
+                        </p>
+                        
+                        <div className="flex flex-wrap gap-2 mb-4">
+                            {quickQueries.map((q, i) => (
+                                <button
+                                    key={i}
+                                    onClick={() => setQuery(q)}
+                                    className="text-sm px-3 py-1 rounded-full bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition"
+                                >
+                                    {q}
+                                </button>
+                            ))}
+                        </div>
+                        
+                        <div className="flex gap-3">
+                            <input
+                                type="text"
+                                placeholder="ถาม AI เช่น 'หา SMEs ยานยนต์ในชลบุรี'"
+                                className="input-field flex-1"
+                                value={query}
+                                onChange={(e) => setQuery(e.target.value)}
+                                onKeyPress={(e) => e.key === 'Enter' && searchWithAI()}
+                            />
+                            <button 
+                                onClick={searchWithAI}
+                                disabled={isLoading}
+                                className="btn-primary flex items-center gap-2"
+                            >
+                                {isLoading ? (
+                                    <div className="loading-spinner"/>
+                                ) : (
+                                    "🔍 ค้นหา"
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                    
+                    {/* Chat Messages */}
+                    <div className="glass p-6 min-h-[400px] max-h-[600px] overflow-y-auto">
+                        {messages.length === 0 ? (
+                            <div className="text-center py-12">
+                                <div className="text-5xl mb-4">🔍</div>
+                                <h3 className="text-xl font-semibold mb-2">ค้นหาบริษัทด้วย AI</h3>
+                                <p className="text-slate-400">พิมพ์คำถามหรือเลือกจากตัวอย่างด้านบน</p>
+                            </div>
+                        ) : (
+                            messages.map((msg, i) => (
+                                <div key={i} className={msg.role === 'user' ? 'user-message' : 'ai-message'}>
+                                    <div className="whitespace-pre-wrap">{msg.content}</div>
+                                    {msg.companies && msg.companies.length > 0 && (
+                                        <div className="mt-4 space-y-3">
+                                            {msg.companies.map((company, j) => (
+                                                <div key={j} className="bg-slate-800/50 p-4 rounded-lg">
+                                                    <div className="flex items-start justify-between gap-4">
+                                                        <div>
+                                                            <h4 className="font-semibold">{company.name}</h4>
+                                                            <p className="text-sm text-slate-400">{company.nameEn}</p>
+                                                            <div className="flex flex-wrap gap-2 mt-2">
+                                                                <span className="tag tag-blue">{company.industry}</span>
+                                                                <span className="tag tag-purple">{company.province}</span>
+                                                            </div>
+                                                            <p className="text-sm text-slate-300 mt-2">{company.description}</p>
+                                                        </div>
+                                                        <div className="flex flex-col gap-2">
+                                                            <span className="text-xl font-bold text-emerald-400">{company.opportunityScore}%</span>
+                                                            {company.website && (
+                                                                <a 
+                                                                    href={company.website}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="text-sm text-blue-400 hover:underline"
+                                                                >
+                                                                    🔗 เว็บไซต์
+                                                                </a>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            <button
+                                                onClick={() => {
+                                                    onAddCompanies(msg.companies);
+                                                    alert(`เพิ่ม ${msg.companies.length} บริษัทเข้าระบบแล้ว!`);
+                                                }}
+                                                className="btn-primary w-full mt-4"
+                                            >
+                                                ➕ เพิ่มบริษัททั้งหมดเข้าระบบ
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            ))
+                        )}
+                        {isLoading && (
+                            <div className="ai-message flex items-center gap-3">
+                                <div className="loading-spinner"/>
+                                <span>กำลังค้นหา...</span>
+                            </div>
+                        )}
+                        <div ref={messagesEndRef}/>
+                    </div>
+                </div>
+            );
+        };
+        
+        // Map View (Main Dashboard)
+        const MapView = ({ onProvinceClick }) => {
+            const totalCompanies = COMPANIES_DATABASE.length;
+            const smeCount = COMPANIES_DATABASE.filter(c => c.type === 'SME').length;
+            const avgScore = Math.round(COMPANIES_DATABASE.reduce((a, b) => a + b.opportunityScore, 0) / totalCompanies);
+            
+            return (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Stats */}
+                    <div className="lg:col-span-3 grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="stat-card">
+                            <div className="text-3xl font-bold text-blue-400">{totalCompanies}</div>
+                            <div className="text-sm text-slate-400">บริษัทในระบบ</div>
+                        </div>
+                        <div className="stat-card">
+                            <div className="text-3xl font-bold text-emerald-400">{smeCount}</div>
+                            <div className="text-sm text-slate-400">SMEs</div>
+                        </div>
+                        <div className="stat-card">
+                            <div className="text-3xl font-bold text-amber-400">{Object.keys(PROVINCES_DATA).length}</div>
+                            <div className="text-sm text-slate-400">จังหวัด</div>
+                        </div>
+                        <div className="stat-card">
+                            <div className="text-3xl font-bold text-purple-400">{avgScore}%</div>
+                            <div className="text-sm text-slate-400">คะแนนเฉลี่ย</div>
+                        </div>
+                    </div>
+                    
+                    {/* Map */}
+                    <div className="lg:col-span-2 glass p-6">
+                        <h2 className="text-lg font-semibold mb-4">🗺️ แผนที่ประเทศไทย</h2>
+                        <p className="text-sm text-slate-400 mb-4">คลิกที่จุดเพื่อดูบริษัทในจังหวัดนั้น</p>
+                        <ThailandMap onProvinceClick={onProvinceClick}/>
+                    </div>
+                    
+                    {/* Province List */}
+                    <div className="glass p-6">
+                        <h2 className="text-lg font-semibold mb-4">📍 จังหวัดที่มีข้อมูล</h2>
+                        <ProvinceList onProvinceClick={onProvinceClick}/>
+                    </div>
+                </div>
+            );
+        };
+        
+        // Main App
+        const App = () => {
+            const [currentView, setCurrentView] = useState('map');
+            const [selectedProvince, setSelectedProvince] = useState(null);
+            const [companies, setCompanies] = useState(COMPANIES_DATABASE);
+            const [apiKey, setApiKey] = useState(localStorage.getItem('gemini_api_key') || '');
+            
+            const handleProvinceClick = (province) => {
+                setSelectedProvince(province);
+                setCurrentView('province');
+            };
+            
+            const handleNavigate = (view) => {
+                setCurrentView(view);
+                setSelectedProvince(null);
+            };
+            
+            const handleAddCompanies = (newCompanies) => {
+                setCompanies(prev => [...prev, ...newCompanies]);
+            };
+            
+            const getProvinceCompanies = (province) => {
+                return companies.filter(c => c.province === province);
+            };
+            
+            return (
+                <div className="min-h-screen p-4 lg:p-6">
+                    <div className="max-w-7xl mx-auto">
+                        <Header 
+                            currentView={currentView}
+                            onNavigate={handleNavigate}
+                            apiKey={apiKey}
+                            setApiKey={setApiKey}
+                        />
+                        
+                        {currentView === 'map' && (
+                            <MapView onProvinceClick={handleProvinceClick}/>
+                        )}
+                        
+                        {currentView === 'province' && selectedProvince && (
+                            <ProvinceDetailView 
+                                province={selectedProvince}
+                                companies={getProvinceCompanies(selectedProvince)}
+                                onBack={() => handleNavigate('map')}
+                            />
+                        )}
+                        
+                        {currentView === 'ai-search' && (
+                            <AISearchView 
+                                apiKey={apiKey}
+                                onAddCompanies={handleAddCompanies}
+                            />
+                        )}
+                        
+                        <footer className="mt-8 py-4 text-center text-sm text-slate-500">
+                            <p>Manufacturing Intel Thailand • AI-Powered Workload Prediction</p>
+                        </footer>
+                    </div>
+                </div>
+            );
+        };
+        
+        ReactDOM.createRoot(document.getElementById('app')).render(<App />);
+    </script>
+</body>
+</html>
